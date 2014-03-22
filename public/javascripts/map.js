@@ -26,6 +26,7 @@ function loadPosition() {
 function onPositionLoaded() {
 	if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
 		position = eval("(" + ajaxRequest.responseText + ")");
+		console.log(position);
 		setupMap(position);		
 	}
 }
@@ -45,7 +46,7 @@ function setupMap(position){
 
 	map.setView(new L.LatLng(43.2537875, 1.2096094), 15);
 	map.addLayer(osm);
-	L.marker([ position.lat, position.lon ]).addTo(map);
+	L.marker([ position.latitude, position.longitude ]).addTo(map);
 }
 
 function setupAjax() {

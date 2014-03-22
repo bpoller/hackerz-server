@@ -12,11 +12,12 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
 
 import play.Logger.ALogger;
-import play.libs.Json;
+import play.libs.F.Function;
+import play.libs.F.Promise;
+import play.libs.WS;
+import play.libs.WS.WSRequestHolder;
 import play.mvc.Controller;
 import play.mvc.Result;
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Sigfox extends Controller {
 
@@ -37,17 +38,24 @@ public class Sigfox extends Controller {
 	 */
 	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/hackerz/";
 
-	public static Result lastPosition() {
-		ObjectNode result = Json.newObject();
-		result.put("lat", 43.2537875);
-		result.put("lon", 1.2096094);
-		return ok(result);
+	public static Promise<Result> lastPosition() {
+
+		WSRequestHolder request = WS.url(dataStoreURL);
+		request.setAuth(APP_KEY, MASTER_KEY);
+		request.setQueryParameter("sort", "{\"timestamp\":-1}");
+		request.setQueryParameter("limit", "1");
+
+		final Promise<Result> resultPromise = request.get().map(
+				new Function<WS.Response, Result>() {
+					public Result apply(WS.Response response) {
+						return ok(response.asJson().get(0));
+					}
+				});
+
+		return resultPromise;
 	}
 
 	public static Result endPoint() {
-
-		logger.error("APP_KEY: " + APP_KEY);
-		logger.error("MASTER_KEY: " + MASTER_KEY);
 
 		Map<String, String[]> form = request().body().asFormUrlEncoded();
 
