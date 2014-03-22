@@ -12,8 +12,10 @@ public class Sigfox extends Controller {
 		ALogger logger = play.Logger.of(Sigfox.class);
 
 		RequestBody body = request().body();
-		
-		logger.error(body.toString());
+
+		logger.error(body.asFormUrlEncoded().get("slot.latitude")[0]);
+
+		logger.error(body.asFormUrlEncoded().get("slot.longitude")[0]);
 
 		return ok("OK.");
 	}
