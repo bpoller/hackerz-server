@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.Map;
 
@@ -11,10 +12,15 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
 
 import play.Logger.ALogger;
+import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 public class Sigfox extends Controller {
+
+	static final ALogger logger = play.Logger.of(Sigfox.class);
 
 	/**
 	 * Kinvey App key
@@ -31,8 +37,14 @@ public class Sigfox extends Controller {
 	 */
 	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/hackerz/";
 
+	public static Result lastPosition() {
+		ObjectNode result = Json.newObject();
+		result.put("lat", 43.2537875);
+		result.put("lon", 1.2096094);
+		return ok(result);
+	}
+
 	public static Result endPoint() {
-		ALogger logger = play.Logger.of(Sigfox.class);
 
 		logger.error("APP_KEY: " + APP_KEY);
 		logger.error("MASTER_KEY: " + MASTER_KEY);
@@ -51,27 +63,30 @@ public class Sigfox extends Controller {
 		logger.error("Json : " + data.toString());
 
 		try {
-			return status(send(connection(), data.toString()));
+			return status(post(connection(dataStoreURL), data.toString()));
 		} catch (IOException ioe) {
 			logger.error(ioe.getMessage());
 			return status(INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	private static HttpsURLConnection connection() throws IOException {
-
-		URL url = new URL(dataStoreURL);
+	private static HttpsURLConnection connection(String theURL) throws IOException {
+		URL url = new URL(theURL);
 		HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
+		return authenticate(con);
+	}
 
+	private static HttpsURLConnection authenticate(HttpsURLConnection con)
+			throws UnsupportedEncodingException {
 		String auth = new String(APP_KEY + ":" + MASTER_KEY);
 		String encodedAuth = DatatypeConverter.printBase64Binary(auth.getBytes("UTF-8"));
 		con.setRequestProperty("Authorization", "Basic " + encodedAuth);
 		return con;
 	}
 
-	private static int send(HttpsURLConnection connection, String data) throws IOException {
+	private static int post(HttpsURLConnection connection, String data) throws IOException {
+		connection.setRequestMethod("POST");
 		connection.setDoOutput(true);
 		DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 		wr.writeBytes(data);
