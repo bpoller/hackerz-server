@@ -44,7 +44,7 @@ function setupMap(position){
 		attribution : osmAttrib
 	});
 
-	map.setView(new L.LatLng(43.2537875, 1.2096094), 15);
+	map.setView(new L.LatLng(position.latitude, position.longitude), 15);
 	map.addLayer(osm);
 	L.marker([ position.latitude, position.longitude ]).addTo(map);
 }

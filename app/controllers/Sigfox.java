@@ -11,9 +11,12 @@ import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import play.Logger.ALogger;
 import play.libs.F.Function;
 import play.libs.F.Promise;
+import play.libs.Json;
 import play.libs.WS;
 import play.libs.WS.WSRequestHolder;
 import play.mvc.Controller;
@@ -53,6 +56,21 @@ public class Sigfox extends Controller {
 				});
 
 		return resultPromise;
+	}
+
+	public static Result endPoint2() {
+		Map<String, String[]> form = request().body().asFormUrlEncoded();
+		
+		ObjectNode data = Json.newObject();
+		data.put("latitude", form.get("slot.latitude")[0]);
+		data.put("longitude", form.get("slot.longitude")[0]);
+		data.put("timestamp", System.currentTimeMillis());
+
+		WSRequestHolder request = WS.url(dataStoreURL);
+		request.setAuth(APP_KEY, MASTER_KEY);
+		request.post(data);
+
+		return ok();
 	}
 
 	public static Result endPoint() {
