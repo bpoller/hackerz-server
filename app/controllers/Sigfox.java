@@ -13,9 +13,9 @@ public class Sigfox extends Controller {
 
 		RequestBody body = request().body();
 
-		logger.error(body.asFormUrlEncoded().get("slot.latitude")[0]);
+		logger.error("lat: " + body.asFormUrlEncoded().get("slot.latitude")[0]);
 
-		logger.error(body.asFormUrlEncoded().get("slot.longitude")[0]);
+		logger.error("long: " + body.asFormUrlEncoded().get("slot.longitude")[0]);
 
 		return ok("OK.");
 	}
