@@ -52,7 +52,7 @@ public class Sigfox extends Controller {
 		ObjectNode data = Json.newObject();
 		data.put("latitude", form.get("slot.latitude")[0]);
 		data.put("longitude", form.get("slot.longitude")[0]);
-		data.put("timestamp", System.currentTimeMillis());
+		data.put("timestamp", String.valueOf(System.currentTimeMillis()));
 
 		WSRequestHolder request = WS.url(dataStoreURL);
 		request.setAuth(APP_KEY, MASTER_KEY);
