@@ -45,6 +45,8 @@ public class Sigfox extends Controller {
 		data.append("{\"latitude\":\"" + latitude + "\",");
 		data.append("\"longitude\":\"" + longitude + "\",");
 		data.append("\"timestamp\":\"" + System.currentTimeMillis() + "\"}");
+		
+		logger.error("Json : " + data.toString());
 
 		try {
 			send(connection(), data.toString());
