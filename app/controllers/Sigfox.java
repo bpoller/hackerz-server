@@ -1,7 +1,9 @@
 package controllers;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Map;
 
@@ -45,17 +47,15 @@ public class Sigfox extends Controller {
 		data.append("{\"latitude\":\"" + latitude + "\",");
 		data.append("\"longitude\":\"" + longitude + "\",");
 		data.append("\"timestamp\":\"" + System.currentTimeMillis() + "\"}");
-		
+
 		logger.error("Json : " + data.toString());
 
 		try {
-			send(connection(), data.toString());
+			return status(send(connection(), data.toString()));
 		} catch (IOException ioe) {
 			logger.error(ioe.getMessage());
 			return status(INTERNAL_SERVER_ERROR);
 		}
-
-		return ok();
 	}
 
 	private static HttpsURLConnection connection() throws IOException {
@@ -71,11 +71,24 @@ public class Sigfox extends Controller {
 		return con;
 	}
 
-	private static void send(HttpsURLConnection connection, String data) throws IOException {
+	private static int send(HttpsURLConnection connection, String data) throws IOException {
 		connection.setDoOutput(true);
 		DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 		wr.writeBytes(data);
 		wr.flush();
 		wr.close();
+
+		int responseCode = connection.getResponseCode();
+
+		BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+
+		return responseCode;
 	}
 }
