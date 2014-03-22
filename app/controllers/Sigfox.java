@@ -32,8 +32,8 @@ public class Sigfox extends Controller {
 	public static Result endPoint() {
 		ALogger logger = play.Logger.of(Sigfox.class);
 
-		logger.info("APP_KEY: " + APP_KEY);
-		logger.info("MASTER_KEY: " + MASTER_KEY);
+		logger.error("APP_KEY: " + APP_KEY);
+		logger.error("MASTER_KEY: " + MASTER_KEY);
 
 		Map<String, String[]> form = request().body().asFormUrlEncoded();
 
@@ -49,7 +49,6 @@ public class Sigfox extends Controller {
 		try {
 			send(connection(), data.toString());
 		} catch (IOException ioe) {
-
 			logger.error(ioe.getMessage());
 			return status(INTERNAL_SERVER_ERROR);
 		}
