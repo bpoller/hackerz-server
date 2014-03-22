@@ -46,7 +46,9 @@ function setupMap(position){
 
 	map.setView(new L.LatLng(position.latitude, position.longitude), 15);
 	map.addLayer(osm);
-	L.marker([ position.latitude, position.longitude ]).addTo(map);
+	var marker = L.marker([ position.latitude, position.longitude ]).addTo(map);
+	var date = new Date(position.timestamp);
+	marker.bindPopup("<b>Last Position</b><br>" + date.toLocaleString() ).openPopup();
 }
 
 function setupAjax() {
