@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.DatatypeConverter;
 
+import play.Logger.ALogger;
 import play.mvc.Controller;
 import play.mvc.Result;
 
@@ -29,6 +30,11 @@ public class Sigfox extends Controller {
 	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/hackerz/";
 
 	public static Result endPoint() {
+		ALogger logger = play.Logger.of(Sigfox.class);
+
+		logger.error("APP_KEY: " + APP_KEY);
+		logger.error("MASTER_KEY: " + MASTER_KEY);
+
 		Map<String, String[]> form = request().body().asFormUrlEncoded();
 
 		String latitude = form.get("slot.latitude")[0];
@@ -43,6 +49,8 @@ public class Sigfox extends Controller {
 		try {
 			send(connection(), data.toString());
 		} catch (IOException ioe) {
+
+			logger.error(ioe.getMessage());
 			return status(INTERNAL_SERVER_ERROR);
 		}
 
