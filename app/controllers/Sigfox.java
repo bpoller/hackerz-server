@@ -32,8 +32,8 @@ public class Sigfox extends Controller {
 	public static Result endPoint() {
 		ALogger logger = play.Logger.of(Sigfox.class);
 
-		logger.error("APP_KEY: " + APP_KEY);
-		logger.error("MASTER_KEY: " + MASTER_KEY);
+		logger.info("APP_KEY: " + APP_KEY);
+		logger.info("MASTER_KEY: " + MASTER_KEY);
 
 		Map<String, String[]> form = request().body().asFormUrlEncoded();
 
