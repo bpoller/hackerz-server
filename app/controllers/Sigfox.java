@@ -42,9 +42,9 @@ public class Sigfox extends Controller {
 
 		// Données à passer en POST, au format JSON
 		StringBuffer data = new StringBuffer();
-		data.append("{\"latitude\":\"" + latitude + "\"}");
-		data.append("{\"longitude\":\"" + longitude + "\"}");
-		data.append("{\"timestamp\":\"" + System.currentTimeMillis() + "\"}");
+		data.append("{\"latitude\":\"" + latitude + "\",");
+		data.append("\"longitude\":\"" + longitude + "\",");
+		data.append("\"timestamp\":\"" + System.currentTimeMillis() + "\"}");
 
 		try {
 			send(connection(), data.toString());
