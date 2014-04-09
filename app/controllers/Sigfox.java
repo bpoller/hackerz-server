@@ -1,15 +1,15 @@
 package controllers;
 
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-import play.libs.F.Function;
-import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.WS;
 import play.libs.WS.WSRequestHolder;
 import play.mvc.Controller;
 import play.mvc.Result;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Sigfox extends Controller {
@@ -27,37 +27,34 @@ public class Sigfox extends Controller {
 	/**
 	 * URL du datastore Kinvey
 	 */
-	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/hackerz/";
+	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/trackEDF/";
 
-	public static Promise<Result> lastPosition() {
-
-		WSRequestHolder request = WS.url(dataStoreURL);
-		request.setAuth(APP_KEY, MASTER_KEY);
-		request.setQueryParameter("sort", "{\"timestamp\":-1}");
-		request.setQueryParameter("limit", "1");
-
-		final Promise<Result> resultPromise = request.get().map(
-				new Function<WS.Response, Result>() {
-					public Result apply(WS.Response response) {
-						return ok(response.asJson().get(0));
-					}
-				});
-
-		return resultPromise;
-	}
-
-	public static Result savePosition() {
-		Map<String, String[]> form = request().body().asFormUrlEncoded();
+	public static Result saveData(String data) {
+		ObjectNode json = Json.newObject();
+		json.put("tariff", extractTariff(data));
+		json.put("transitionIndex", extractTransitionIndex(data));
+		json.put("date", new SimpleDateFormat().format(new Date()));
+		ArrayNode values = json.putArray("values");
+		copyInto(values,data);
 		
-		ObjectNode data = Json.newObject();
-		data.put("latitude", form.get("slot.latitude")[0]);
-		data.put("longitude", form.get("slot.longitude")[0]);
-		data.put("timestamp", String.valueOf(System.currentTimeMillis()));
-
 		WSRequestHolder request = WS.url(dataStoreURL);
 		request.setAuth(APP_KEY, MASTER_KEY);
-		request.post(data);
-
+		request.post(json);
 		return ok();
 	}
+
+	private static void copyInto(ArrayNode values, String data) {
+		for(int i = 4; i < 24; i=i+2){
+			String sVal = data.substring(i,i+2);
+			values.add(Integer.parseInt(sVal,16));
+		}
+	}
+
+	private static int extractTransitionIndex(String data) {
+		return Integer.parseInt(data.substring(0,2));
+	}
+
+	private static String extractTariff(String data) {
+		return data.substring(2, 4).equals("01")? "PEAK": "OFF_PEAK";
+	}	
 }
