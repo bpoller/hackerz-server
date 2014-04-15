@@ -5,7 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index()
 
-GET	   /data					    controllers.Sigfox.save(time:String, data:String)
+GET	   /data					    controllers.Sigfox.save(time:java.lang.Long, data:String)
 
 GET    /chart						controllers.Sigfox.chart(start:java.lang.Long?=System.currentTimeMillis()-63072000000l, end:java.lang.Long?=System.currentTimeMillis(), callback:String)
 

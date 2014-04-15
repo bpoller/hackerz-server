@@ -33,18 +33,17 @@ public class Sigfox extends Controller {
 	 */
 	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/trackEDF/";
 
-	public static Promise<Result> save(String time, String data) {
+	public static Promise<Result> save(long time, String data) {
 		ObjectNode json = newObject();
 		json.put("tariff", extractTariff(data));
 		json.put("transitionIndex", extractTransitionIndex(data));
-		json.put("time", time + "000");
+		json.put("time", time * 1000);
 		ArrayNode values = json.putArray("values");
 		copyInto(values, data);
 
-		WSRequestHolder request = WS.url(dataStoreURL);
-		request.setAuth(APP_KEY, MASTER_KEY);
-		return request.post(json).map(new Function<WS.Response, Result>() {
+		return getRequest().post(json).map(new Function<WS.Response, Result>() {
 			public Result apply(WS.Response response) {
+				System.out.println(response.getBody());
 				return status(response.getStatus(), response.getBody());
 			}
 		});
@@ -58,6 +57,20 @@ public class Sigfox extends Controller {
 	private static ArrayNode getData(long start, long end) {
 		ArrayNode dataNode = newObject().arrayNode();
 	
+		
+		ObjectNode query = newObject();
+		query.putObject("time").put("$gte", start);
+		query.putObject("time").put("$lte", end);
+		
+		WSRequestHolder request = getRequest().setQueryParameter("query", query.toString());
+		
+		request.get().map(new Function<WS.Response, Result>() {
+			public Result apply(WS.Response response) {
+				System.out.println(response.getBody());
+				return status(response.getStatus(), response.getBody());
+			}
+		});
+		
 		 System.out.println("Start " + new Date(start));
 		 System.out.println("End " + new Date(end));
 		 long interval = calculateInterval(start, end);
@@ -93,5 +106,11 @@ public class Sigfox extends Controller {
 
 	private static String extractTariff(String data) {
 		return data.substring(2, 4).equals("01") ? "PEAK" : "OFF_PEAK";
+	}
+	
+	private static WSRequestHolder getRequest() {
+		WSRequestHolder request = WS.url(dataStoreURL);
+		request.setAuth(APP_KEY, MASTER_KEY);
+		return request;
 	}
 }

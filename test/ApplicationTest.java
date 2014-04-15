@@ -43,11 +43,11 @@ public class ApplicationTest {
 		}
 	}
 
-	private String timeMillis(String date, String time) throws ParseException {
+	private long timeMillis(String date, String time) throws ParseException {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
 
-		String result = String.valueOf((dateFormat.parse(date + "--" + time).getTime()));
-		return result.substring(0, result.length() - 3);
+		long result = dateFormat.parse(date + "--" + time).getTime();
+		return result / 1000;
 	}
 
 	private List<String> readSmallTextFile(String aFileName) throws IOException {
