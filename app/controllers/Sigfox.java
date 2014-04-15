@@ -43,7 +43,6 @@ public class Sigfox extends Controller {
 
 		return getRequest().post(json).map(new Function<WS.Response, Result>() {
 			public Result apply(WS.Response response) {
-				System.out.println(response.getBody());
 				return status(response.getStatus(), response.getBody());
 			}
 		});
@@ -57,12 +56,13 @@ public class Sigfox extends Controller {
 	private static ArrayNode getData(long start, long end) {
 		ArrayNode dataNode = newObject().arrayNode();
 	
-		
 		ObjectNode query = newObject();
 		query.putObject("time").put("$gte", start);
 		query.putObject("time").put("$lte", end);
 		
-		WSRequestHolder request = getRequest().setQueryParameter("query", query.toString());
+		WSRequestHolder request = getRequest();
+		request.setQueryParameter("query", query.toString());
+		request.setQueryParameter("sort", "time");
 		
 		request.get().map(new Function<WS.Response, Result>() {
 			public Result apply(WS.Response response) {
