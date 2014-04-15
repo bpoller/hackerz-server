@@ -1,22 +1,7 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.*;
-
-import play.mvc.*;
-import play.test.*;
-import play.data.DynamicForm;
-import play.data.validation.ValidationError;
-import play.data.validation.Constraints.RequiredValidator;
-import play.i18n.Lang;
-import play.libs.F;
-import play.libs.F.*;
-
-import static play.test.Helpers.*;
-import static org.fest.assertions.Assertions.*;
+import org.junit.Test;
 
 
 /**
@@ -29,11 +14,6 @@ public class ApplicationTest {
 
     @Test
     public void simpleCheck() {
-        int a = 1 + 1;
-        assertThat(a).isEqualTo(2);
+        System.out.println(new SimpleDateFormat().format(new Date(1397576555000l)));
     }
-
-    
-
-
 }

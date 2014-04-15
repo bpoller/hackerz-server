@@ -30,7 +30,7 @@ public class Sigfox extends Controller {
 		ObjectNode json = Json.newObject();
 		json.put("tariff", extractTariff(data));
 		json.put("transitionIndex", extractTransitionIndex(data));
-		json.put("time", time);
+		json.put("time", time+"000");
 		ArrayNode values = json.putArray("values");
 		copyInto(values, data);
 
