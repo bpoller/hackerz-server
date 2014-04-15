@@ -1,7 +1,9 @@
 package controllers;
 
+import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.WS;
+import play.libs.F.Function;
 import play.libs.WS.WSRequestHolder;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -26,18 +28,21 @@ public class Sigfox extends Controller {
 	 */
 	static final String dataStoreURL = "https://baas.kinvey.com/appdata/" + APP_KEY + "/trackEDF/";
 
-	public static Result save(String time, String data) {
+	public static Promise<Result> save(String time, String data) {
 		ObjectNode json = Json.newObject();
 		json.put("tariff", extractTariff(data));
 		json.put("transitionIndex", extractTransitionIndex(data));
-		json.put("time", time+"000");
+		json.put("time", time + "000");
 		ArrayNode values = json.putArray("values");
 		copyInto(values, data);
 
 		WSRequestHolder request = WS.url(dataStoreURL);
 		request.setAuth(APP_KEY, MASTER_KEY);
-		request.post(json);
-		return ok();
+		return request.post(json).map(new Function<WS.Response, Result>() {
+			public Result apply(WS.Response response) {
+				return status(response.getStatus(), response.getBody());
+			}
+		});
 	}
 
 	private static void copyInto(ArrayNode values, String data) {
