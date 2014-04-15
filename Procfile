@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/{your project name} -Dhttp.port=$PORT
+web: target/universal/stage/bin/hackerz-server -Dhttp.port=$PORT
