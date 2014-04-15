@@ -4,5 +4,5 @@
 logs/
 target/
 /.target
+Procfile
 
-.DS_Store
