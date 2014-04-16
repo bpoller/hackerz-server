@@ -1,10 +1,13 @@
 $(function() {
 	
+	Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
+	
 	// See source code from the JSONP handler at https://github.com/highslide-software/highcharts.com/blob/master/samples/data/from-sql.php
 	$.getJSON('chart?callback=?', function(data) {
-		
-		// Add a null value for the end date 
-		//data = [].concat(data, [[Date.UTC(2011, 9, 14, 19, 59), null, null, null, null]]);
 				
 		// create the chart
 		$('#container').highcharts('StockChart', {

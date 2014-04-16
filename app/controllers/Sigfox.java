@@ -55,13 +55,32 @@ public class Sigfox extends Controller {
 	public static ArrayNode getData(long start, long end) {
 
 		ArrayNode records = (start == -1 || end == -1) ? getRecords() : getRecords(start, end);
+		ArrayNode unwoundRecords = unwind(records);
+		return reduce(unwoundRecords, stepSize(calculateQueryIntervalInMinutes(start, end)));
+	}
 
-		return reduce(records, stepSize(calculateQueryIntervalInMinutes(start, end)));
+	public static ArrayNode unwind(ArrayNode records) {
+		Iterator<JsonNode> it = records.elements();
+		ArrayNode result = newObject().arrayNode();
+		while (it.hasNext()) {
+			JsonNode readLine = it.next();
+			long time = readLine.get("time").asLong();
+
+			Iterator<JsonNode> valueIt = readLine.get("values").elements();
+			int i = 0;
+			while (valueIt.hasNext()) {
+				int value = valueIt.next().intValue();
+				ObjectNode line = newObject();
+				line.put("time", time + (i * 60000));
+				line.put("value", value);
+				result.add(line);
+				i++;
+			}
+		}
+		return result;
 	}
 
 	public static ArrayNode reduce(ArrayNode data, long stepSize) {
-
-		System.out.println("StepSize : " + stepSize);
 
 		ArrayNode result = newObject().arrayNode();
 		long counter = 0;
@@ -77,7 +96,7 @@ public class Sigfox extends Controller {
 			if (counter % stepSize == 0) {
 				ArrayNode node = newObject().arrayNode();
 				node.add(reading.get("time").asLong());
-				node.add(mem);
+				node.add(mem*60/stepSize);
 				result.add(node);
 				mem = 0;
 			}
@@ -99,17 +118,14 @@ public class Sigfox extends Controller {
 	public static long calculateQueryIntervalInMinutes(long start, long end) {
 		return Math.abs((end - start) / 60000);
 	}
-	
-	public static ArrayNode getRecords()
-	{
+
+	public static ArrayNode getRecords() {
 		return getRecords("{}");
 	}
 
 	public static ArrayNode getRecords(long start, long end) {
-		
-		String query = "{\"time\":{\"$gte\":"+start+",\"$lte\":"+end+"}}";
-		
-		System.out.println(query.toString());
+
+		String query = "{\"time\":{\"$gte\":" + start + ",\"$lte\":" + end + "}}";
 		return getRecords(query.toString());
 	}
 
