@@ -2,7 +2,7 @@ package controllers;
 
 import static play.libs.Json.newObject;
 
-import java.util.Date;
+import java.util.Iterator;
 
 import play.libs.F.Function;
 import play.libs.F.Promise;
@@ -11,12 +11,11 @@ import play.libs.WS.WSRequestHolder;
 import play.mvc.Controller;
 import play.mvc.Result;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Sigfox extends Controller {
-
-	private static final int ONE_MINUTE = 60000;
 
 	/**
 	 * Kinvey App key
@@ -53,44 +52,77 @@ public class Sigfox extends Controller {
 		return ok(resultString);
 	}
 
-	private static ArrayNode getData(long start, long end) {
-		ArrayNode dataNode = newObject().arrayNode();
-	
-		ObjectNode query = newObject();
-		query.putObject("time").put("$gte", start);
-		query.putObject("time").put("$lte", end);
-		
-		WSRequestHolder request = getRequest();
-		request.setQueryParameter("query", query.toString());
-		request.setQueryParameter("sort", "time");
-		
-		request.get().map(new Function<WS.Response, Result>() {
-			public Result apply(WS.Response response) {
-				System.out.println(response.getBody());
-				return status(response.getStatus(), response.getBody());
-			}
-		});
-		
-		 System.out.println("Start " + new Date(start));
-		 System.out.println("End " + new Date(end));
-		 long interval = calculateInterval(start, end);
-		 System.out.println(interval);
-		 
-		for (long i = start; i < end; i += interval) {
-			ArrayNode line = dataNode.addArray();
-			line.add(i );
-			line.add(Math.random() * 100);
-		}
+	public static ArrayNode getData(long start, long end) {
 
-		return dataNode;
+		ArrayNode records = (start == -1 || end == -1) ? getRecords() : getRecords(start, end);
+
+		return reduce(records, stepSize(calculateQueryIntervalInMinutes(start, end)));
 	}
 
-	private static long calculateInterval(long start, long end) {
-		long step = (end - start) / 144;
-		if (step < ONE_MINUTE) {
-			step = ONE_MINUTE;
+	public static ArrayNode reduce(ArrayNode data, long stepSize) {
+
+		System.out.println("StepSize : " + stepSize);
+
+		ArrayNode result = newObject().arrayNode();
+		long counter = 0;
+		int mem = 0;
+		Iterator<JsonNode> it = data.elements();
+		JsonNode reading = null;
+
+		while (it.hasNext()) {
+			reading = it.next();
+			counter++;
+			mem += reading.get("value").asInt();
+
+			if (counter % stepSize == 0) {
+				ArrayNode node = newObject().arrayNode();
+				node.add(reading.get("time").asLong());
+				node.add(mem);
+				result.add(node);
+				mem = 0;
+			}
 		}
-		return step;
+		return result;
+	}
+
+	public static long stepSize(long queryInterval) {
+		return queryInterval < 144 ? 1 : queryInterval / 144;
+	}
+
+	/**
+	 * Calculate query interval length in minutes
+	 * 
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public static long calculateQueryIntervalInMinutes(long start, long end) {
+		return Math.abs((end - start) / 60000);
+	}
+	
+	public static ArrayNode getRecords()
+	{
+		return getRecords("{}");
+	}
+
+	public static ArrayNode getRecords(long start, long end) {
+		
+		String query = "{\"time\":{\"$gte\":"+start+",\"$lte\":"+end+"}}";
+		
+		System.out.println(query.toString());
+		return getRecords(query.toString());
+	}
+
+	public static ArrayNode getRecords(String query) {
+		WSRequestHolder request = getRequest();
+		request.setQueryParameter("query", query);
+		request.setQueryParameter("sort", "time");
+
+		return request.get().map(new Function<WS.Response, ArrayNode>() {
+			public ArrayNode apply(WS.Response response) {
+				return (ArrayNode) response.asJson();
+			}
+		}).get(5000l);
 	}
 
 	private static void copyInto(ArrayNode values, String data) {
@@ -107,7 +139,7 @@ public class Sigfox extends Controller {
 	private static String extractTariff(String data) {
 		return data.substring(2, 4).equals("01") ? "PEAK" : "OFF_PEAK";
 	}
-	
+
 	private static WSRequestHolder getRequest() {
 		WSRequestHolder request = WS.url(dataStoreURL);
 		request.setAuth(APP_KEY, MASTER_KEY);

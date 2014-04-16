@@ -7,7 +7,7 @@ GET     /                           controllers.Application.index()
 
 GET	   /data					    controllers.Sigfox.save(time:java.lang.Long, data:String)
 
-GET    /chart						controllers.Sigfox.chart(start:java.lang.Long?=System.currentTimeMillis()-63072000000l, end:java.lang.Long?=System.currentTimeMillis(), callback:String)
+GET    /chart						controllers.Sigfox.chart(start:java.lang.Long?=-1l, end:java.lang.Long?=-1l, callback:String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
