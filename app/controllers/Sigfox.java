@@ -53,10 +53,34 @@ public class Sigfox extends Controller {
 	}
 
 	public static ArrayNode getData(long start, long end) {
+		long theStart = (start == -1) ? getFirstDate() : start;
+		long theEnd = (end == -1) ? getLastDate() : end;
 
-		ArrayNode records = (start == -1 || end == -1) ? getRecords() : getRecords(start, end);
-		ArrayNode unwoundRecords = unwind(records);
-		return reduce(unwoundRecords, stepSize(calculateQueryIntervalInMinutes(start, end)));
+		ArrayNode unwoundRecords = unwind(getRecords(theStart, theEnd));
+		return reduce(unwoundRecords, stepSize(calculateQueryIntervalInMinutes(theStart, theEnd)));
+	}
+
+	public static Long getFirstDate() {
+		return getDate("time");
+	}
+
+	public static Long getLastDate() {
+		return getDate("{\"time\": -1}");
+	}
+
+	private static long getDate(String sort) {
+		WSRequestHolder request = getRequest();
+
+		request.setQueryParameter("query", "{}");
+		request.setQueryParameter("sort", sort);
+		request.setQueryParameter("fields", "time");
+		request.setQueryParameter("limit", "1");
+
+		return request.get().map(new Function<WS.Response, Long>() {
+			public Long apply(WS.Response response) {
+				return response.asJson().elements().next().get("time").asLong();
+			}
+		}).get(5000l);
 	}
 
 	public static ArrayNode unwind(ArrayNode records) {
@@ -96,7 +120,7 @@ public class Sigfox extends Controller {
 			if (counter % stepSize == 0) {
 				ArrayNode node = newObject().arrayNode();
 				node.add(reading.get("time").asLong());
-				node.add(mem*60/stepSize);
+				node.add(mem * 60 / stepSize);
 				result.add(node);
 				mem = 0;
 			}
@@ -119,17 +143,10 @@ public class Sigfox extends Controller {
 		return Math.abs((end - start) / 60000);
 	}
 
-	public static ArrayNode getRecords() {
-		return getRecords("{}");
-	}
-
 	public static ArrayNode getRecords(long start, long end) {
 
 		String query = "{\"time\":{\"$gte\":" + start + ",\"$lte\":" + end + "}}";
-		return getRecords(query.toString());
-	}
 
-	public static ArrayNode getRecords(String query) {
 		WSRequestHolder request = getRequest();
 		request.setQueryParameter("query", query);
 		request.setQueryParameter("sort", "time");
