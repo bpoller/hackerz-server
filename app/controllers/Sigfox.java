@@ -125,6 +125,14 @@ public class Sigfox extends Controller {
 				mem = 0;
 			}
 		}
+		
+		if (counter % stepSize != 0) {
+			ArrayNode node = newObject().arrayNode();
+			node.add(reading.get("time").asLong());
+			node.add(mem * 60 / stepSize);
+			result.add(node);
+		}
+		
 		return result;
 	}
 
